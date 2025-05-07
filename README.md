@@ -1,72 +1,101 @@
-# Diabuddy
+# Medical SOAP Note Analysis System
 
-A healthcare application for diabetes management with real-time transcription and AI-powered medical note organization.
+A full-stack application that uses machine learning to analyze medical text and generate structured SOAP (Subjective, Objective, Assessment, Plan) notes.
 
 ## Features
 
-- Real-time speech-to-text transcription
-- AI-powered medical text analysis
-- SOAP note organization
-- Health metrics tracking
-- Real-time chat functionality
+- Real-time medical text analysis
+- SOAP note generation
+- Medical entity recognition
+- Medical condition classification
+- Speech-to-text transcription
+- Modern React frontend
+- Flask backend with ML integration
 
-## Tech Stack
+## Prerequisites
 
-- Frontend: React.js
-- Backend: Flask
-- AI: Hugging Face Transformers
-- Real-time Communication: Socket.IO
+- Python 3.8 or higher
+- Node.js 14 or higher
+- npm or yarn
+- Git
 
-## Setup Instructions
+## Installation
 
-### Backend Setup
+1. Clone the repository:
+   ```bash
+   git clone <your-repository-url>
+   cd <repository-name>
+   ```
 
-1. Create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+2. Backend Setup:
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   ```
+
+3. Frontend Setup:
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+## Running the Application
+
+1. Start the Backend:
+   ```bash
+   cd backend
+   python app.py
+   ```
+   The backend server will start at http://localhost:5000
+
+2. Start the Frontend:
+   ```bash
+   cd frontend
+   npm start
+   ```
+   The frontend will start at http://localhost:3000
+
+## Usage
+
+1. Open your browser and navigate to http://localhost:3000
+2. You can:
+   - Type medical text directly
+   - Use the speech recording feature
+   - View AI-generated SOAP notes
+   - See medical entity recognition results
+   - Get condition classifications
+
+## Project Structure
+
+```
+├── backend/
+│   ├── app.py              # Flask application with ML integration
+│   └── requirements.txt    # Python dependencies
+├── frontend/
+│   ├── src/
+│   │   ├── App.js         # Main React component
+│   │   └── App.css        # Styles
+│   └── package.json       # Node.js dependencies
+└── README.md
 ```
 
-2. Install dependencies:
-```bash
-cd backend
-pip install -r requirements.txt
-```
+## Technologies Used
 
-3. Run the Flask server:
-```bash
-python app.py
-```
+- Frontend:
+  - React
+  - Socket.IO
+  - Modern CSS
 
-### Frontend Setup
-
-1. Install dependencies:
-```bash
-cd frontend
-npm install
-```
-
-2. Start the development server:
-```bash
-npm start
-```
-
-## Version History
-
-### v1.0.0
-- Initial release
-- Basic transcription functionality
-- SOAP note organization
-- Health metrics tracking
+- Backend:
+  - Flask
+  - Transformers (Hugging Face)
+  - Bio_ClinicalBERT
+  - Biomedical NER
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Feel free to submit issues and enhancement requests!
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+[Your chosen license] 
