@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DiaBuddy - AI Medical Transcription</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+            background: #f5f5f5;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            grid-row: 1 / -1;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .sidebar-section h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Top Bar */
+        .topbar {
+            grid-column: 2;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+
+        /* Main Content */
+        .main-content {
+            grid-column: 2;
+            grid-row: 2;
+            padding: 20px;
+            background: #fff;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        .content-left {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .content-right {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            height: fit-content;
+        }
+
+        /* Buttons and Controls */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #007AFF;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-record {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: #666;
+        }
+
+        .tab.active {
+            border-bottom-color: #007AFF;
+            color: #007AFF;
+        }
+
+        /* Form Elements */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        /* Session List */
+        .session-list {
+            list-style: none;
+        }
+
+        .session-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .session-item:hover {
+            background: #f5f5f5;
+        }
+
+        /* Status Indicators */
+        .status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status.online {
+            background: #4CAF50;
+        }
+
+        .status.recording {
+            background: #dc3545;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Template Section */
+        .template-section {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .template-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        /* AI Suggestions */
+        .ai-suggestion {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            border-left: 3px solid #007AFF;
+        }
+
+        .ai-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* Utility Classes */
+        .mt-20 { margin-top: 20px; }
+        .text-muted { color: #666; }
+        .badge {
+            background: #e0e0e0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        /* Add these styles to your existing CSS */
+        .vitals-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .vital-item {
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .vital-label {
+            display: block;
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .vital-value {
+            display: block;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <!-- Left Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-section">
+            <button class="btn btn-primary" style="width: 100%">New Consultation</button>
+        </div>
+        
+        <div class="sidebar-section">
+            <h3>Recent Consultations</h3>
+            <div class="session-list">
+                <div class="session-item">
+                    <div class="status online"></div>
+                    <div>
+                        <div>Fatigue, Breathlessness</div>
+                        <div class="text-muted" style="font-size: 0.8em;">27/03/25 11:15 am</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>Templates</h3>
+            <div class="session-list">
+                <div class="session-item">
+                    <div>General Practitioner's note</div>
+                    <span class="badge">Default</span>
+                </div>
+                <div class="session-item">Specialist Referral</div>
+                <div class="session-item">Follow-up Consultation</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div>
+                <strong>Patient Consultation</strong>
+                <div style="font-size: 0.9em; color: #666;">
+                    <span class="status online"></span>
+                    Active Session
+                </div>
+            </div>
+            <select style="width: 150px">
+                <option>English</option>
+                <option>Spanish</option>
+                <option>French</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-record" id="recordButton">
+                <span id="recordIcon">●</span> Start Recording
+            </button>
+            <button class="btn btn-primary">Save & Complete</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-left">
+            <div class="tabs">
+                <div class="tab active">Transcript</div>
+                <div class="tab">Context</div>
+                <div class="tab">Notes</div>
+            </div>
+
+            <div class="template-section">
+                <div class="template-header">
+                    <h3>General Practitioner's Note</h3>
+                    <button class="btn btn-secondary">Change Template</button>
+                </div>
+                <textarea id="mainTranscript" placeholder="The consultation transcript will appear here in real-time as you speak..."></textarea>
+            </div>
+
+            <div class="ai-suggestion">
+                <div><strong>AI Suggestion:</strong> Based on the symptoms described, consider adding blood pressure and heart rate measurements.</div>
+                <div class="ai-controls">
+                    <button class="btn btn-secondary">Accept</button>
+                    <button class="btn btn-secondary">Dismiss</button>
+                </div>
+            </div>
+
+            <div id="history-section">
+                <h3>Consultation History</h3>
+                <div id="messages" class="mt-20"></div>
+            </div>
+        </div>
+
+        <div class="content-right">
+            <div id="patient-info">
+                <h3>Patient Information</h3>
+                <div class="mt-20">
+                    <div id="status"></div>
+                </div>
+            </div>
+
+            <div class="mt-20">
+                <h3>Quick Actions</h3>
+                <div class="input-group mt-20">
+                    <input type="text" id="message" placeholder="Add a quick note...">
+                    <button onclick="sendMessage()" class="btn btn-primary mt-20">Add Note</button>
+                </div>
+            </div>
+
+            <div class="mt-20">
+                <h3>Visit Information</h3>
+                <div id="counter" class="mt-20"></div>
+                <button onclick="incrementCounter()" class="btn btn-secondary mt-20">Record Visit</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        // Template definitions
+        const templates = {
+            'general': {
+                name: "General Practitioner's note",
+                sections: {
+                    subjective: "Chief complaint:\nHistory of present illness:\nPast medical history:\nMedications:\nAllergies:\nSocial history:",
+                    objective: "Vital signs:\nPhysical examination:\nLaboratory results:",
+                    assessment: "Primary diagnosis:\nDifferential diagnoses:\nClinical reasoning:",
+                    plan: "Medications:\nTests/Procedures:\nFollow-up:\nPatient education:"
+                }
+            },
+            'follow_up': {
+                name: "Follow-up Consultation",
+                sections: {
+                    subjective: "Interval history:\nCurrent symptoms:\nMedication compliance:\nSide effects:",
+                    objective: "Vital signs:\nFocused examination:\nTest results review:",
+                    assessment: "Progress evaluation:\nCurrent status:\nComplications:",
+                    plan: "Medication adjustments:\nAdditional testing:\nNext follow-up:"
+                }
+            },
+            'specialist': {
+                name: "Specialist Referral",
+                sections: {
+                    subjective: "Referral reason:\nSpecialist-specific history:\nRelevant symptoms:",
+                    objective: "Focused examination:\nRelevant test results:\nImaging findings:",
+                    assessment: "Specialist impression:\nRecommendations:\nRisk assessment:",
+                    plan: "Specialized treatment plan:\nCoordination of care:\nFollow-up schedule:"
+                }
+            }
+        };
+
+        // Initialize Socket.IO
+        const socket = io();
+        
+        // Audio Recording Setup
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        const recordButton = document.getElementById('recordButton');
+        const recordIcon = document.getElementById('recordIcon');
+        const mainTranscript = document.getElementById('mainTranscript');
+        let currentTemplate = 'general';
+
+        // Template switching
+        function switchTemplate(templateName) {
+            currentTemplate = templateName;
+            const template = templates[templateName];
+            mainTranscript.value = Object.entries(template.sections)
+                .map(([section, content]) => `${section.toUpperCase()}:\n${content}\n`)
+                .join('\n');
+        }
+
+        // Initialize recording capabilities
+        async function initializeRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                    if (mediaRecorder.state === "recording") {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            const base64Audio = reader.result.split(',')[1];
+                            socket.emit('audio_data', { audio: base64Audio });
+                        };
+                        reader.readAsDataURL(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    audioChunks = [];
+                };
+
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                alert('Error accessing microphone. Please ensure microphone permissions are granted.');
+            }
+        }
+
+        // Handle recording button click
+        recordButton.addEventListener('click', () => {
+            if (!mediaRecorder) {
+                initializeRecording();
+                return;
+            }
+
+            isRecording = !isRecording;
+            if (isRecording) {
+                mediaRecorder.start(1000);
+                recordButton.innerHTML = '<span id="recordIcon">■</span> Stop Recording';
+                recordButton.classList.add('recording');
+            } else {
+                mediaRecorder.stop();
+                recordButton.innerHTML = '<span id="recordIcon">●</span> Start Recording';
+                recordButton.classList.remove('recording');
+            }
+        });
+
+        // Handle incoming SOAP notes
+        socket.on('soap_notes', (data) => {
+            updateTranscriptWithSOAP(data);
+            updateAISuggestions(data.sections);
+            updateVitalsDisplay(data.sections.Objective.vitals);
+        });
+
+        function updateTranscriptWithSOAP(data) {
+            const template = templates[currentTemplate];
+            let transcriptText = '';
+
+            // Subjective Section
+            transcriptText += 'SUBJECTIVE:\n';
+            transcriptText += data.sections.Subjective.text + '\n\n';
+            if (data.sections.Subjective.key_findings.length > 0) {
+                transcriptText += 'Key Findings:\n- ' + data.sections.Subjective.key_findings.join('\n- ') + '\n\n';
+            }
+
+            // Objective Section
+            transcriptText += 'OBJECTIVE:\n';
+            transcriptText += data.sections.Objective.text + '\n';
+            if (Object.keys(data.sections.Objective.vitals).length > 0) {
+                transcriptText += '\nVital Signs:\n';
+                for (const [vital, value] of Object.entries(data.sections.Objective.vitals)) {
+                    transcriptText += `- ${vital.replace('_', ' ')}: ${value}\n`;
+                }
+            }
+            if (Object.keys(data.sections.Objective.measurements).length > 0) {
+                transcriptText += '\nMeasurements:\n';
+                for (const [measure, data] of Object.entries(data.sections.Objective.measurements)) {
+                    transcriptText += `- ${measure}: ${data.value}${data.unit ? ' ' + data.unit : ''}\n`;
+                }
+            }
+            transcriptText += '\n';
+
+            // Assessment Section
+            transcriptText += 'ASSESSMENT:\n';
+            transcriptText += data.sections.Assessment.text + '\n';
+            if (data.sections.Assessment.diagnoses.length > 0) {
+                transcriptText += '\nDiagnoses:\n- ' + data.sections.Assessment.diagnoses.join('\n- ') + '\n';
+            }
+            transcriptText += '\n';
+
+            // Plan Section
+            transcriptText += 'PLAN:\n';
+            transcriptText += data.sections.Plan.text + '\n';
+            if (data.sections.Plan.medications.length > 0) {
+                transcriptText += '\nMedications:\n';
+                data.sections.Plan.medications.forEach(med => {
+                    transcriptText += `- ${med.medication} ${med.dosage}\n`;
+                });
+            }
+            if (data.sections.Plan.follow_up) {
+                transcriptText += `\nFollow-up: ${data.sections.Plan.follow_up.duration} ${data.sections.Plan.follow_up.unit}\n`;
+            }
+
+            mainTranscript.value = transcriptText;
+        }
+
+        function updateVitalsDisplay(vitals) {
+            const vitalsDiv = document.createElement('div');
+            vitalsDiv.className = 'vitals-display';
+            vitalsDiv.innerHTML = `
+                <h4>Latest Vital Signs</h4>
+                <div class="vitals-grid">
+                    ${Object.entries(vitals).map(([key, value]) => `
+                        <div class="vital-item">
+                            <span class="vital-label">${key.replace('_', ' ').toUpperCase()}</span>
+                            <span class="vital-value">${value}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            // Update the patient info section
+            const patientInfo = document.getElementById('patient-info');
+            const existingVitals = patientInfo.querySelector('.vitals-display');
+            if (existingVitals) {
+                patientInfo.replaceChild(vitalsDiv, existingVitals);
+            } else {
+                patientInfo.appendChild(vitalsDiv);
+            }
+        }
+
+        // Enhanced AI Suggestions
+        function updateAISuggestions(sections) {
+            const aiSuggestionDiv = document.querySelector('.ai-suggestion div:first-child');
+            let suggestions = [];
+
+            // Check Subjective section
+            if (!sections.Subjective.key_findings.length) {
+                suggestions.push("Consider asking about key symptoms and their duration");
+            }
+
+            // Check Objective section
+            const vitals = sections.Objective.vitals;
+            const missingVitals = ['blood_pressure', 'heart_rate', 'temperature'].filter(v => !vitals[v]);
+            if (missingVitals.length) {
+                suggestions.push(`Missing vital signs: ${missingVitals.join(', ')}`);
+            }
+
+            // Check Assessment section
+            if (!sections.Assessment.diagnoses.length) {
+                suggestions.push("Consider adding primary and differential diagnoses");
+            }
+
+            // Check Plan section
+            if (!sections.Plan.medications.length) {
+                suggestions.push("Consider specifying medications with dosages");
+            }
+            if (!sections.Plan.follow_up) {
+                suggestions.push("Consider adding follow-up instructions");
+            }
+
+            // Display the most important suggestion
+            if (suggestions.length > 0) {
+                aiSuggestionDiv.innerHTML = `<strong>AI Suggestion:</strong> ${suggestions[0]}`;
+            } else {
+                aiSuggestionDiv.innerHTML = '<strong>AI Suggestion:</strong> Note appears complete. Review for accuracy.';
+            }
+        }
+
+        // Initialize the interface
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set initial template
+            switchTemplate('general');
+            
+            // Initialize recording capabilities
+            initializeRecording();
+            
+            // Set up template switching
+            document.querySelectorAll('.session-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const templateName = item.dataset.template || 'general';
+                    switchTemplate(templateName);
+                });
+            });
+        });
+
+        // Check server status
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                document.getElementById('status').innerHTML = `
+                    <div style="background: #f5f5f5; padding: 10px; border-radius: 4px;">
+                        <p><strong>Status:</strong> ${data.status}</p>
+                        <p><strong>Last Updated:</strong> ${data.time}</p>
+                        <p><strong>Notes:</strong> ${data.messages_count}</p>
+                        <p><strong>Visits:</strong> ${data.counter}</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const messageInput = document.getElementById('message');
+            const message = messageInput.value;
+            if (message) {
+                try {
+                    const response = await fetch('/api/messages', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message }),
+                    });
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        messageInput.value = '';
+                        loadMessages();
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+        }
+
+        // Load messages
+        async function loadMessages() {
+            try {
+                const response = await fetch('/api/messages');
+                const data = await response.json();
+                const messagesDiv = document.getElementById('messages');
+                messagesDiv.innerHTML = data.messages.map(msg => `
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 4px; margin-bottom: 10px;">
+                        <div style="color: #666; font-size: 0.9em;">${msg.timestamp}</div>
+                        <div style="margin-top: 5px;">${msg.message}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Increment counter
+        async function incrementCounter() {
+            try {
+                const response = await fetch('/api/counter', {
+                    method: 'POST',
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    document.getElementById('counter').textContent = `Total Visits: ${data.counter}`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Load initial data
+        checkStatus();
+        loadMessages();
+        
+        // Auto-refresh status every 30 seconds
+        setInterval(checkStatus, 30000);
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html> 
