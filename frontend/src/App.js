@@ -77,7 +77,7 @@ function App() {
     
     setIsProcessing(true);
     try {
-      const response = await fetch('http://localhost:5000/api/transcribe', {
+      const response = await fetch('http://localhost:5000/api/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -216,6 +216,70 @@ function App() {
     </div>
   );
 
+  const renderAIAnalysis = () => (
+    <div className="ai-analysis">
+      {aiAnalysis && (
+        <>
+          {aiAnalysis.classification && (
+            <div className="analysis-section">
+              <h3>Medical Classification</h3>
+              <div className="classification-result">
+                {aiAnalysis.classification.map((item, index) => (
+                  <div key={index} className="classification-item">
+                    <span className="label">{item.label}</span>
+                    <span className="score">{(item.score * 100).toFixed(2)}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {aiAnalysis.entities && (
+            <div className="analysis-section">
+              <h3>Medical Entities</h3>
+              <div className="entities-list">
+                {Object.entries(aiAnalysis.entities).map(([type, entities]) => (
+                  <div key={type} className="entity-group">
+                    <h4>{type}</h4>
+                    <ul>
+                      {entities.map((entity, index) => (
+                        <li key={index}>{entity}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {aiAnalysis.soap && (
+            <div className="analysis-section">
+              <h3>SOAP Analysis</h3>
+              <div className="soap-notes">
+                <div className="soap-section">
+                  <h4>Subjective</h4>
+                  <p>{aiAnalysis.soap.subjective || 'No subjective information found'}</p>
+                </div>
+                <div className="soap-section">
+                  <h4>Objective</h4>
+                  <p>{aiAnalysis.soap.objective || 'No objective information found'}</p>
+                </div>
+                <div className="soap-section">
+                  <h4>Assessment</h4>
+                  <p>{aiAnalysis.soap.assessment || 'No assessment information found'}</p>
+                </div>
+                <div className="soap-section">
+                  <h4>Plan</h4>
+                  <p>{aiAnalysis.soap.plan || 'No plan information found'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+
   const renderTranscriptionTool = () => (
     <div className="transcription-tool">
       <div className="transcription-controls">
@@ -246,38 +310,7 @@ function App() {
         </button>
       </div>
 
-      {aiAnalysis && (
-        <div className="ai-analysis">
-          <h3>AI Analysis</h3>
-          {aiAnalysis.classification && (
-            <div className="analysis-section">
-              <h4>Medical Classification</h4>
-              <pre>{JSON.stringify(aiAnalysis.classification, null, 2)}</pre>
-            </div>
-          )}
-          {aiAnalysis.entities && (
-            <div className="analysis-section">
-              <h4>Medical Entities</h4>
-              {Object.entries(aiAnalysis.entities).map(([type, entities]) => (
-                <div key={type} className="entity-group">
-                  <h5>{type}</h5>
-                  <ul>
-                    {entities.map((entity, index) => (
-                      <li key={index}>{entity}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
-          {aiAnalysis.understanding && (
-            <div className="analysis-section">
-              <h4>Medical Text Understanding</h4>
-              <pre>{JSON.stringify(aiAnalysis.understanding, null, 2)}</pre>
-            </div>
-          )}
-        </div>
-      )}
+      {renderAIAnalysis()}
 
       <div className="medical-notes">
         <h3>Medical Notes (SOAP Format)</h3>
